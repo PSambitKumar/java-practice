@@ -1,0 +1,12 @@
+class Total{
+	public static void main(String[] args){
+	System.out.println("Enter the quntity:");
+	Scanner sc=new Scanner(System.in);
+	float f=sc.nextFloat();
+	System.out.println("Enter the amount:");
+	float a=sc.nextFloat();
+	float total=a+f;
+	System.out.println("Toatal is:"+total);
+	
+	}
+}

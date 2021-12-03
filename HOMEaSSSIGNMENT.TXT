@@ -1,0 +1,457 @@
+LOGIN.JAVA:
+------------------
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+@WebServlet("/Login")
+public class Login extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		PrintWriter out= response.getWriter();
+		HttpSession sess = request.getSession(true);
+		String username, password;
+		
+		username = request.getParameter("username");
+		password = request.getParameter("password");
+		
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+			Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/sambit_db","root","");	
+			String sql = "SELECT * FROM user_master WHERE username=? AND userpass=?";
+			PreparedStatement ps = con.prepareStatement(sql);
+			ps.setString(1, username);
+			ps.setString(2, password);
+			ResultSet rs = ps.executeQuery();
+			
+			if(rs.next()) {
+				sess.setAttribute("x1", username);
+				sess.setAttribute("x2", password);
+				ServletContext sc = getServletContext();
+		        RequestDispatcher rd = sc.getRequestDispatcher("/user.jsp");
+		        rd.forward(request,response);
+			}
+			else {
+				out.println("Wrong Username and Password!!");
+			}
+
+
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+REGD.JAVA:-
+==================
+
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
+
+@MultipartConfig
+@WebServlet("/Regd")
+public class Regd extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		int userid;
+		String userid1, userphn, userpass, username, useradd, usergender, useremail, userdob;
+		
+		HttpSession sess = request.getSession(true);
+		PrintWriter out= response.getWriter();
+		
+		userid1 = request.getParameter("userid");
+		userid = Integer.parseInt(userid1);
+		userpass = request.getParameter("userpass");
+		username = request.getParameter("username");
+		useradd = request.getParameter("useradd");
+		usergender = request.getParameter("usergender");
+		userphn = request.getParameter("userphn");
+		useremail = request.getParameter("useremail");
+		userdob = request.getParameter("userdob");
+		
+		Part userphoto = request.getPart("userphoto");
+		String userPhotoName = userphoto.getSubmittedFileName();
+		//out.println(userPhotoName);
+		String uploadPath = "C:/Users/sambit.pradhan/eclipse-workspace/HomeAssignment/userphotos/"+userPhotoName;
+		
+		try {
+			FileOutputStream fos = new FileOutputStream(uploadPath);
+			InputStream is = userphoto.getInputStream();
+			
+			byte []data = new byte[is.available()];
+			is.read(data);
+			fos.write(data);
+			fos.close();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+			Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/sambit_db","root","");	
+			String sql = "INSERT INTO user_master(userid, userpass, username, useradd, usergender, userphn, useremail, userdob, userphoto) VALUES(?,?,?,?,?,?,?,?,?)";
+			PreparedStatement ps = con.prepareStatement(sql);
+			ps.setInt(1, userid);
+			ps.setString(2, userpass);
+			ps.setString(3, username);
+			ps.setString(4, useradd);
+			ps.setString(5, usergender);
+			ps.setString(6, userphn);
+			ps.setString(7, useremail);
+			ps.setString(8, userdob);
+			ps.setString(9, userPhotoName);
+			int update = ps.executeUpdate();
+			
+			if(update > 0) {
+				out.println("Data Update!!");
+			}
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+}
+
+FORGOTPASSWORD:-
+=================
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Forgot Password</h1>
+</body>
+</html>
+
+LOGING.JSP
+=============
+
+<%@ page session="true" contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Login Page</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<br>
+<br>
+<br>
+<br>
+	<table>
+		<tr>
+			<td> <form action="Login" method="post">
+            <table><br><br><br><br><br><br>
+                <tr>
+                    <td>Username:</td>
+                    <td><input type="text" name="username" placeholder="username"><br></td>
+                </tr><br>
+                <tr>
+                    <td>Password:</td>
+                    <td><input type="password" name="password" placeholder="password"><br></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><center><input type="submit" name="b1" value="Login Here"><br></center></td>
+                </tr>
+            </table><br><br><br><br><br><br>
+        </form></td>
+        
+        <td><div align="center"><h1>Welcome</h1></div>
+		<div align="center"><h2> Login Form.</h2></div>
+		<div align="center"><p>Don't Have an Account: <a href="Regd.jsp"><b>Register Here</b></a></p></div>
+		</td>
+		</tr><br><br><br><br>
+		
+	</table>
+	<br><br><br><br>
+</body>
+</html>
+
+REGD.JSP
+===============
+<%@ page import="java.sql.*" language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>Registration Page</title>
+</head>
+<body>
+
+<%!
+	int id = 1;
+%>
+
+<%
+Class.forName("com.mysql.jdbc.Driver");
+Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/sambit_db","root","");	
+PreparedStatement ps = con.prepareStatement("SELECT userid FROM user_master");
+ResultSet rs = ps.executeQuery();
+
+%>
+
+<br>
+<br>
+<br>
+<br>
+	<table>
+		<tr>
+			<td><div align="center"><h1>Welcome</h1></div>
+	<div align="center"><h2> Registration Form.</h2></div>
+		<div align="center"><p>Already Have an Account: <a href="Login.jsp"><b>Login Here</b></a></p></div>
+		</td>
+			<td><form action="Regd" method="post" enctype="multipart/form-data">
+		<table cellpadding="4">
+			<tr>
+            <td>User ID</td>
+            <%
+			while(rs.next()){
+				int id1 = rs.getInt(1);
+				while(id1 == id){
+					id = id+1;
+					}
+				}%>
+            <td><input type="text" name="userid" value="<%out.println(id);%>"></td>
+        </tr>
+        
+        <tr>
+            <td>Password:</td>
+            <td><input type="password" name="userpass" placeholder="Enter Password"></td>
+        </tr>
+        
+        <tr>
+            <td>User Name:</td>
+            <td><input type="text" name="username" placeholder="Enter Username" ></td>
+        </tr>
+        
+        <tr>
+            <td>User Address:</td>
+            <td><textarea name="useradd" placeholder="Enter Address" rows="3" cols="21"></textarea></td>
+        </tr>
+        
+        <tr>
+            <td>User Gender</td>
+            <td><input type="radio" value="Male" name="usergender" checked > Male
+                <input type="radio" value="Female" name="usergender"> Female
+                <input type="radio" value="Other" name="usergender"> Other</td>
+        </tr>
+        
+        <tr>
+            <td>Phone Number:</td>
+            <td><input type="number" name="userphn" placeholder="Phone Number" maxlength="10"></td>
+        </tr>
+        
+        <tr>
+            <td>Email Address:</td>
+            <td><input type="email" name="useremail" placeholder="Enter Email Address"></td>
+        </tr>
+        
+         <tr>
+            <td>Date of Birth:</td>
+            <td><input type="date" name="userdob"></td>
+        </tr>
+        
+        <tr>
+            <td><label for="img">Select Image:</label></td>
+            <td><input type="file" id="img" name="userphoto" accept="image/*"></td>
+        </tr>
+        
+        <tr>
+            <td colspan="2"><input type="reset" Value="Reset"><input type="submit" Value="Submit"></td>
+        </tr>
+		</table></form></td>
+		</tr>
+	</table>
+	<br><br><br><br>
+	</body>
+</html>
+
+
+STYLE.JSP
++==============
+@charset "ISO-8859-1";
+
+p{
+	text-align:center;
+}
+table{
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+th, td {
+	height:30px;
+  background-color: #96D4D4;
+  border: 1px solid white;
+  border-collapse: collapse;
+  border-radius: 7px;
+  text-align: center;
+}
+
+/* .main{
+	width: 350px;
+	height: 500px;
+	background: red;
+	overflow: hidden;
+	background: url("https://doc-08-2c-docs.googleusercontent.com/docs/securesc/68c90smiglihng9534mvqmq1946dmis5/fo0picsp1nhiucmc0l25s29respgpr4j/1631524275000/03522360960922298374/03522360960922298374/1Sx0jhdpEpnNIydS4rnN4kHSJtU1EyWka?e=view&authuser=0&nonce=gcrocepgbb17m&user=03522360960922298374&hash=tfhgbs86ka6divo3llbvp93mg4csvb38") no-repeat center/ cover;
+	border-radius: 10px;
+	box-shadow: 5px 20px 50px #000;
+}
+input{
+	width: 50%;
+	height: 30px;
+	margin: 10px auto;
+	justify-content: center;
+	display: block;
+	color: #fff;
+	background: #573b8a;
+	font-size: 1em;
+	font-weight: bold;
+	margin-top: 20px;
+	outline: none;
+	border: none;
+	border-radius: 5px;
+	transition: .2s ease-in;
+	cursor: pointer;
+}
+button{
+	width: 50%;
+	height: 10px;
+	margin: 10px auto;
+	justify-content: center;
+	display: block;
+	color: #fff;
+	background: #573b8a;
+	font-size: 1em;
+	font-weight: bold;
+	margin-top: 20px;
+	outline: none;
+	border: none;
+	border-radius: 5px;
+	transition: .2s ease-in;
+	cursor: pointer;
+}
+button:hover{
+	background: #6d44b8;
+}
+ */
+
+USER.JAVA:
+===============
+<%@ page session="true" language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Welcome</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<%
+String username = (String)session.getAttribute("x1");
+String password = (String)session.getAttribute("x2");
+%>
+
+<form action="">
+	<table>
+		<tr>
+			<td><a href="ForgotPassword.jsp">Forgot Password</a></td>
+			<td><a href="Edit Profile.jsp">Edit Profile</a></td>
+			<td><a href="Login.jsp">Logout</a></td>
+		</tr>
+		
+		<tr>
+			<td colspan="2">Welcome <%out.println(username);%></td>
+			<td></td>
+		</tr>
+	</table>
+</form>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
